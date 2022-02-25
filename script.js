@@ -7,13 +7,25 @@ Vue.createApp({
           delivery: '',
           next:false,
           synth: window.speechSynthesis,
-          voices:[],
-          vic:[],
+          isLoading: true,
+          selectedVoice: 0,
+          voiceList: [],
+          greetingSpeech: new window.SpeechSynthesisUtterance()
       }
     },
-    computed: {
-        
-    },
+    mounted(){
+        // wait for voices to load
+   this.voiceList = this.synth.getVoices()
+
+   if (this.voiceList.length) {
+    this.isLoading = false;
+  }
+
+   this.synth.onvoiceschanged = () => {
+     this.voiceList = this.synth.getVoices()
+     this.isLoading = false;
+   }
+   },
     methods: {
         async search(){
             if(!this.next){
@@ -23,6 +35,7 @@ Vue.createApp({
                     this.setup = setup;
                     this.delivery = delivery;
                     this.next = true;
+                    this.shout(this.setup);
                 }
                 catch(error){   
                     this.setup = "error 404";
@@ -30,35 +43,17 @@ Vue.createApp({
                 }
             }else{
                 this.next= false;
+                this.shout(this.delivery);
             }
         },
-        showVoices(){
-            console.log("a");
-            let vic = speechSynthesis.getVoices()
-            vic.map((v,i)=>{
-                
-                let voice = {
-                    value:  i,
-                    name:v.name
-                }
-                this.voices.push(voice);
-                console.log(this.voices);
-            })
-        }
-    },
-    mounted(){
-        this.showVoices();
-        this.vic = this.synth.getVoices()
-        console.log(this.vic);
-        // this.synth.onvoiceschanged = () => {
-        //     this.voiceList = this.synth.getVoices()
-        //     // give a bit of delay to show loading screen
-        //     // just for the sake of it, I suppose. Not the best reason
-        //     setTimeout(() => {
-        //       this.isLoading = false
-        //     }, 800)
-        //   }
       
-        //   this.listenForSpeechEvents()
-    }
+      shout (text) {
+        this.greetingSpeech.text = text;
+  
+        this.greetingSpeech.voice = this.voiceList[this.selectedVoice]
+        
+        
+        this.synth.speak(this.greetingSpeech)
+      }
+    },
   }).mount('#app')
